@@ -44,6 +44,7 @@ async function run() {
       const result=await carsCollection.find(query).toArray()
       res.send(result)
     })
+
     app.get('/cars/:id',async(req,res)=>{
       const id=req.params.id
       const query={_id: new ObjectId(id) };
@@ -54,6 +55,12 @@ async function run() {
     app.post('/cars',async(req,res)=>{
       const addCar=req.body;
       const result=await carsCollection.insertOne(addCar)
+      res.send(result)
+    })
+    app.delete('/cars/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id : new ObjectId(id)}
+      const result=await carsCollection.deleteOne(query)
       res.send(result)
     })
     app.post('/bookings',async(req,res)=>{
@@ -78,6 +85,7 @@ async function run() {
       const result=await bookingCollection.deleteOne(query)
       res.send(result)
     })
+   
     app.put('/bookings/:id',async(req,res)=>{
       const bookingId=req.params.id;
       const { newDate } = req.body;
