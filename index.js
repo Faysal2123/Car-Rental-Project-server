@@ -59,6 +59,30 @@ async function run() {
       res.send(result)
       
     })
+    app.get('/bookings',async(req,res)=>{
+      const email=req.query.email
+      const query={userEmail:email};
+      const bookings=await bookingCollection.find(query).toArray()
+      res.send(bookings)
+    })
+    app.delete('/bookings/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id: new ObjectId(id)}
+      const result=await bookingCollection.deleteOne(query)
+      res.send(result)
+    })
+    app.put('/bookings/:id',async(req,res)=>{
+      const bookingId=req.params.id;
+      const { newDate } = req.body;
+
+      const result = await bookingCollection.updateOne(
+        { _id: new ObjectId(bookingId) }, 
+        { $set: { bookingDate: new Date(newDate) } }
+      );
+    
+      res.send(result.matchedCount === 0 ? { message: 'Booking not found' } : { message: 'Booking date updated successfully' });
+    })
+    
 
 
 
