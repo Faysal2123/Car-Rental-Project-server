@@ -37,6 +37,13 @@ async function run() {
       const result=await  cursor.toArray()
       res.send(result)
     })
+    app.get('/cars/:id',async(req,res)=>{
+      const id=req.params.id
+      const query={_id: new ObjectId(id) };
+      const result=await carsCollection.findOne(query)
+      res.send(result)
+
+    })
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
