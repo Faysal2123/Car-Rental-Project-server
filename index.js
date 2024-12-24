@@ -32,10 +32,16 @@ async function run() {
     const database=client.db("carPortal")
     const carsCollection=database.collection("car-collection")
     const bookingCollection=database.collection('booking-collection')
-
+  
     app.get('/cars',async(req,res)=>{
       const cursor=carsCollection.find()
       const result=await  cursor.toArray()
+      res.send(result)
+    })
+    app.get('/cars/email',async(req,res)=>{
+      const email=req.query.email;
+      const query={userEmail:email}
+      const result=await carsCollection.find(query).toArray()
       res.send(result)
     })
     app.get('/cars/:id',async(req,res)=>{
@@ -59,6 +65,7 @@ async function run() {
       res.send(result)
       
     })
+    
     app.get('/bookings',async(req,res)=>{
       const email=req.query.email
       const query={userEmail:email};
