@@ -31,6 +31,7 @@ async function run() {
   try {
     const database=client.db("carPortal")
     const carsCollection=database.collection("car-collection")
+    const bookingCollection=database.collection('booking-collection')
 
     app.get('/cars',async(req,res)=>{
       const cursor=carsCollection.find()
@@ -44,6 +45,24 @@ async function run() {
       res.send(result)
 
     })
+    app.post('/cars',async(req,res)=>{
+      const addCar=req.body;
+      const result=await carsCollection.insertOne(addCar)
+      res.send(result)
+    })
+    app.post('/bookings',async(req,res)=>{
+      const booking=req.body
+      if(!booking.carModel || !booking.userEmail){
+        return res.status(400).send({message:'Missing required fields'})
+      }
+      const result=await bookingCollection.insertOne(booking)
+      res.send(result)
+      
+    })
+
+
+
+
     await client.connect();
     // Send a ping to confirm a successful connection
     await client.db("admin").command({ ping: 1 });
