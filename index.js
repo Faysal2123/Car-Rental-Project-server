@@ -1,21 +1,20 @@
 const express=require('express')
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
 const cors=require('cors')
+const jwt=require('jsonwebtoken')
+const cookieParser=require('cookie-parser')
 const app=express()
 require('dotenv').config();
 const port=process.env.PORT || 5000
 
-app.use(cors())
+app.use(cors({
+  origin:['http://localhost:5174'],
+  credentials:true
+}))
 app.use(express.json())
-
-
-// EliteRides
-// 8vvF8EmU8X5fiH47
-
+app.use(cookieParser())
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.erebr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
-
-
 
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
@@ -32,7 +31,22 @@ async function run() {
     const database=client.db("carPortal")
     const carsCollection=database.collection("car-collection")
     const bookingCollection=database.collection('booking-collection')
-  
+    app.post('/jwt',async(req,res)=>{
+      const user=req.body
+      const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1hr'});    
+      res.cookie('token',token,{
+        httpOnly:true,
+        secure:false
+      })
+      .send({success:true})
+    })
+    app.post('/logout',async(req,res)=>{
+      res.clearCookie('token',{
+        httpOnly:true,
+        secure:false
+      })
+      .send({success:true})
+    })
     app.get('/cars',async(req,res)=>{
       const cursor=carsCollection.find()
       const result=await  cursor.toArray()
@@ -74,6 +88,7 @@ async function run() {
       res.send(result)
       
     })
+    
     app.post('/bookings',async(req,res)=>{
       const booking=req.body
       if(!booking.carModel || !booking.userEmail){
