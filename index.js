@@ -8,11 +8,26 @@ require('dotenv').config();
 const port=process.env.PORT || 5000
 
 app.use(cors({
-  origin:['http://localhost:5174'],
+  origin:['http://localhost:5175'],
   credentials:true
 }))
 app.use(express.json())
 app.use(cookieParser())
+
+const verifyToken=(req,res,next)=>{
+  const token=req.cookies?.token
+
+  if(!token){
+    res.send.status(401).send({message:'unauthorized access'})
+  }
+  jwt.verify(token,process.env.JWT_SECRET,(err,decoded)=>{
+    if(err){
+      return res.status(401).send({message:'unauthorized access'})
+    }
+    req.user=decoded
+    next()
+  })
+}
 
 const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASSWORD}@cluster0.erebr.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0`;
 
@@ -52,9 +67,12 @@ async function run() {
       const result=await  cursor.toArray()
       res.send(result)
     })
-    app.get('/cars/email',async(req,res)=>{
+    app.get('/cars/email',verifyToken,async(req,res)=>{
       const email=req.query.email;
       const query={userEmail:email}
+      if(req.user.email !== req.query.email){
+        return res.status(403).send({message:'forbidden'})
+      }
       const result=await carsCollection.find(query).toArray()
       res.send(result)
     })
@@ -95,6 +113,11 @@ async function run() {
         return res.status(400).send({message:'Missing required fields'})
       }
       const result=await bookingCollection.insertOne(booking)
+      const carQuery={model: booking.carModel};
+      const updateResult=await carsCollection.updateOne(
+        carQuery,
+        {$inc:{bookingCount:1}}
+      )
       res.send(result)
       
     })
