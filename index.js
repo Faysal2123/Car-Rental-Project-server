@@ -63,6 +63,17 @@ async function run() {
       const result=await carsCollection.deleteOne(query)
       res.send(result)
     })
+    app.put('/cars/:id',async(req,res)=>{
+      const { id } = req.params;
+      const updateCar=req.body
+
+      const result=await carsCollection.updateOne(
+        {_id : new ObjectId(id)},
+        {$set:updateCar}
+      );
+      res.send(result)
+      
+    })
     app.post('/bookings',async(req,res)=>{
       const booking=req.body
       if(!booking.carModel || !booking.userEmail){
