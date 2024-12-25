@@ -8,7 +8,10 @@ require('dotenv').config();
 const port=process.env.PORT || 5000
 
 app.use(cors({
-  origin:['http://localhost:5175'],
+  origin:['http://localhost:5173',
+    'https://assignment-11-9153e.web.app',
+    'https://assignment-11-9153e.firebaseapp.com'
+  ],
   credentials:true
 }))
 app.use(express.json())
@@ -51,14 +54,14 @@ async function run() {
       const token=jwt.sign(user,process.env.JWT_SECRET,{expiresIn:'1hr'});    
       res.cookie('token',token,{
         httpOnly:true,
-        secure:false
+        secure:process.env.NODE_ENV==='production'
       })
       .send({success:true})
     })
     app.post('/logout',async(req,res)=>{
       res.clearCookie('token',{
         httpOnly:true,
-        secure:false
+        secure:process.env.NODE_ENV==='production'
       })
       .send({success:true})
     })
@@ -128,12 +131,22 @@ async function run() {
       const bookings=await bookingCollection.find(query).toArray()
       res.send(bookings)
     })
-    app.delete('/bookings/:id',async(req,res)=>{
-      const id=req.params.id
-      const query={_id: new ObjectId(id)}
-      const result=await bookingCollection.deleteOne(query)
-      res.send(result)
-    })
+    app.delete('/bookings/:id', async (req, res) => {
+      const id = req.params.id;
+      const query = { _id: new ObjectId(id) };
+      const booking = await bookingCollection.findOne(query);
+      if (!booking) {
+        return res.status(404).send({ message: 'Booking not found' });
+      }  
+      const result = await bookingCollection.deleteOne(query);
+      const carModel = booking.carModel;
+      const updateResult = await carsCollection.updateOne(
+        { model: carModel },
+        { $inc: { bookingCount: -1 } } 
+      );
+      res.send({ message: 'Booking deleted successfully', updateResult });
+    });
+    
    
     app.put('/bookings/:id',async(req,res)=>{
       const bookingId=req.params.id;
@@ -151,9 +164,9 @@ async function run() {
 
 
 
-    await client.connect();
+    // await client.connect();
     // Send a ping to confirm a successful connection
-    await client.db("admin").command({ ping: 1 });
+    // await client.db("admin").command({ ping: 1 });
     console.log("Pinged your deployment. You successfully connected to MongoDB!");
   } finally {
     // Ensures that the client will close when you finish/error
